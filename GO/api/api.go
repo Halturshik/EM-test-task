@@ -1,5 +1,10 @@
 package api
 
+import (
+	"github.com/Halturshik/EM-test-task/GO/db"
+	"github.com/go-chi/chi/v5"
+)
+
 type API struct {
 	Store *db.Store
 }
