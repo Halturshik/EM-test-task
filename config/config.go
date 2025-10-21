@@ -25,19 +25,19 @@ func LoadConfig() (*Config, error) {
 	}
 
 	if cfg.DBHost == "" {
-		return nil, fmt.Errorf("DB_HOST не обозначен")
+		return nil, fmt.Errorf("DB_HOST не указан")
 	}
 	if cfg.DBPort == "" {
-		return nil, fmt.Errorf("DB_PORT не обозначен")
+		return nil, fmt.Errorf("DB_PORT не указан")
 	}
 	if cfg.DBUser == "" {
-		return nil, fmt.Errorf("DB_USER не обозначен")
+		return nil, fmt.Errorf("DB_USER не указан")
 	}
 	if cfg.DBPassword == "" {
-		return nil, fmt.Errorf("DB_PASSWORD не обозначен")
+		return nil, fmt.Errorf("DB_PASSWORD не указан")
 	}
 	if cfg.DBName == "" {
-		return nil, fmt.Errorf("DB_NAME не обозначен")
+		return nil, fmt.Errorf("DB_NAME не указан")
 	}
 	if cfg.AppPort == "" {
 		cfg.AppPort = "8080"

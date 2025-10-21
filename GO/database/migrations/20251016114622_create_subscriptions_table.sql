@@ -8,11 +8,17 @@ CREATE TABLE subscriptions (
     user_id UUID NOT NULL,
     service_name VARCHAR(64) NOT NULL,
     price INTEGER NOT NULL,
-    start_date CHAR(7) NOT NULL,
-    end_date CHAR(7)
+    start_date DATE NOT NULL,
+    end_date DATE NULL
 );
+
+CREATE UNIQUE INDEX idx_unique_subscription
+ON subscriptions(user_id, service_name, start_date);
 
 -- +goose Down
 -- +goose StatementBegin
 SELECT 'down SQL query';
 -- +goose StatementEnd
+
+DROP INDEX IF EXISTS idx_unique_subscription;
+DROP TABLE IF EXISTS subscriptions;
