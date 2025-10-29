@@ -20,15 +20,15 @@
 7) Goose — миграции базы данных
 
 ## Запуск проекта
-1. Адаптировать .env.example в .env
+1. Адаптировать `.env.example` в `.env`
 2. Выполить команду:
 ```bash
 docker-compose up --build
 ```
 
 ## После запуска
-API доступно по адресу: http://localhost:8080
-Swagger документация доступна по адресу: http://localhost:8080/swagger/index.html
+1. API доступно по адресу: http://localhost:8080
+2. Swagger документация доступна по адресу: http://localhost:8080/swagger/index.html
 
 Примеры запросов:
 1) Post (Create):
