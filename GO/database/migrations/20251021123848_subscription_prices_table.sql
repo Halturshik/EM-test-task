@@ -7,6 +7,7 @@ CREATE TABLE subscription_prices (
     id SERIAL PRIMARY KEY,
     subscription_id INT NOT NULL REFERENCES subscriptions(id),
     price INT NOT NULL,
+    previous_price INT NULL,
     valid_from DATE NOT NULL,
     valid_to DATE NULL
 );

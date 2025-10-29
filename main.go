@@ -7,6 +7,7 @@ import (
 	"github.com/Halturshik/EM-test-task/GO/api"
 	"github.com/Halturshik/EM-test-task/GO/database"
 	"github.com/Halturshik/EM-test-task/config"
+	_ "github.com/Halturshik/EM-test-task/docs"
 	"github.com/go-chi/chi/v5"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -29,6 +30,7 @@ func main() {
 	defer dbConnection.Close()
 
 	store := database.NewStore(dbConnection)
+	api.StartMonthlySync(store)
 	apiServer := api.NewAPI(store)
 
 	r := chi.NewRouter()

@@ -9,13 +9,9 @@ import (
 
 func (s *Store) GetSubscriptions(ctx context.Context, userID uuid.UUID, serviceName string) ([]Subs, error) {
 	query := `
-        SELECT s.id, s.user_id, s.service_name, sp.price, s.start_date, s.end_date
+        SELECT s.id, s.user_id, s.service_name, s.price, s.start_date, s.end_date
         FROM subscriptions s
-        JOIN subscription_prices sp
-          ON s.id = sp.subscription_id
         WHERE s.user_id = $1
-          AND sp.valid_from <= CURRENT_DATE
-          AND (sp.valid_to IS NULL OR sp.valid_to >= CURRENT_DATE)
     `
 	args := []any{userID}
 

@@ -2,22 +2,35 @@ package database
 
 import (
 	"context"
+	"database/sql"
+	"errors"
+	"time"
 )
 
 func (s *Store) CreateSubscription(ctx context.Context, sub *Subs) error {
-	var exists bool
-	queryCheck := `
-        SELECT EXISTS(
-            SELECT 1 FROM subscriptions
-            WHERE user_id=$1 AND service_name=$2)
-    `
+	if sub.EndDate == nil {
+		t := time.Date(2099, 12, 31, 0, 0, 0, 0, time.UTC)
+		sub.EndDate = &t
+	}
 
-	err := s.DB.QueryRowContext(ctx, queryCheck, sub.UserID, sub.ServiceName).Scan(&exists)
-	if err != nil {
+	var activeStart, activeEnd *time.Time
+	checkConflictQuery := `
+		SELECT start_date, end_date
+        FROM subscriptions
+        WHERE user_id=$1 AND service_name=$2
+          AND (end_date IS NULL OR end_date >= CURRENT_DATE)
+        LIMIT 1
+	`
+
+	err := s.DB.QueryRowContext(ctx, checkConflictQuery, sub.UserID, sub.ServiceName).Scan(&activeStart, &activeEnd)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return err
 	}
-	if exists {
-		return ErrSubIsExist
+
+	if activeStart != nil {
+		if sub.EndDate == nil || !sub.EndDate.Before(*activeStart) {
+			return ErrSubIsExist
+		}
 	}
 
 	query := `

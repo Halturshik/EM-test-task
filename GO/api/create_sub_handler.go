@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -12,7 +13,18 @@ import (
 	"github.com/google/uuid"
 )
 
-func (api *API) createSubscriptionHandler(w http.ResponseWriter, r *http.Request) {
+// @Summary Создать подписку
+// @Description Создает новую подписку для пользователя
+// @Tags subscriptions
+// @Accept json
+// @Produce json
+// @Param subscription body api.CreateSubRequest true "Данные подписки"
+// @Success 201 {object} api.CreateSubResponse "Подписка успешно создана"
+// @Failure 400 {object} api.ErrorResponse "Ошибка валидации"
+// @Failure 409 {object} api.ErrorResponse "Подписка уже существует"
+// @Failure 500 {object} api.ErrorResponse "Внутренняя ошибка сервера"
+// @Router /subscriptions [post]
+func (api *API) CreateSubscriptionHandler(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		UserID      string  `json:"user_id"`
 		ServiceName string  `json:"service_name"`
@@ -34,9 +46,17 @@ func (api *API) createSubscriptionHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if strings.TrimSpace(req.ServiceName) == "" {
+	serviceName := strings.TrimSpace(req.ServiceName)
+	if serviceName == "" {
 		log.Println("Ошибка: не указан сервис подписки")
 		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "Не указан сервис подписки"})
+		return
+	}
+
+	reSN := regexp.MustCompile(`^[A-Za-z0-9 ]+$`)
+	if !reSN.MatchString(serviceName) {
+		log.Println("Ошибка: в названии сервиса используются недопустимые символы")
+		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "Недопустимое название сервиса: используйте только буквы, цифры и пробелы"})
 		return
 	}
 
@@ -49,7 +69,7 @@ func (api *API) createSubscriptionHandler(w http.ResponseWriter, r *http.Request
 
 	start, err := time.Parse("01-2006", req.StartDate)
 	if err != nil {
-		log.Println("Ошибка: некорректный формат даты начала")
+		log.Println("Ошибка: некорректный формат даты начала подписки")
 		writeJSON(w, http.StatusBadRequest, map[string]any{"error": "Неверный формат даты начала действия подписки (используйте месяц-год)"})
 		return
 	}
@@ -58,7 +78,7 @@ func (api *API) createSubscriptionHandler(w http.ResponseWriter, r *http.Request
 	if req.EndDate != nil && *req.EndDate != "" {
 		endParsed, err := time.Parse("01-2006", *req.EndDate)
 		if err != nil {
-			log.Println("Ошибка: некорректный формат даты начала")
+			log.Println("Ошибка: некорректный формат даты конца подписки")
 			writeJSON(w, http.StatusBadRequest, map[string]any{"error": "Неверный формат даты окончания действия подписки (используйте месяц-год)"})
 			return
 		}
@@ -68,11 +88,12 @@ func (api *API) createSubscriptionHandler(w http.ResponseWriter, r *http.Request
 			writeJSON(w, http.StatusBadRequest, map[string]any{"error": "Дата окончания действия подписки не может быть раньше даты ее начала действия"})
 			return
 		}
-		end = &endParsed
+		endOfMonth := time.Date(endParsed.Year(), endParsed.Month()+1, 0, 23, 59, 59, 0, endParsed.Location())
+		end = &endOfMonth
 	}
 	sub := &database.Subs{
 		UserID:      uid,
-		ServiceName: req.ServiceName,
+		ServiceName: serviceName,
 		Price:       req.Price,
 		StartDate:   start,
 		EndDate:     end,
@@ -82,7 +103,7 @@ func (api *API) createSubscriptionHandler(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		if errors.Is(err, database.ErrSubIsExist) {
 			log.Println("Ошибка: подписка уже существует")
-			writeJSON(w, http.StatusConflict, map[string]any{"error": "Подписка на выбранный сервис уже существует"})
+			writeJSON(w, http.StatusConflict, map[string]any{"error": "Активная подписка на выбранный сервис уже существует"})
 			return
 		}
 
